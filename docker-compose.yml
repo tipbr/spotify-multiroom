@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: librespot-snapcast
+    container_name: multiroom-server
     network_mode: host # Use host networking for better audio performance and mDNS discovery
     restart: unless-stopped
     volumes:
