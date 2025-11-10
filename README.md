@@ -1,5 +1,58 @@
-Step 1: Install Base Dependencies
-bashsudo apt-get update
+# Spotify Multiroom Audio System
+
+This project sets up a multiroom audio system using Spotify Connect (via librespot) and Snapcast. You can run this either as a Docker container or natively on Debian-based systems.
+
+## Overview
+
+The system consists of:
+- **Librespot**: A Spotify Connect client that appears as a Spotify device
+- **Snapcast**: A multiroom audio server that streams audio to multiple clients
+- **Avahi**: mDNS service for automatic network discovery
+
+## Quick Start with Docker
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Host networking support (for mDNS discovery)
+
+### Installation
+
+1. Clone this repository:
+```bash
+git clone https://github.com/tipbr/spotify-multiroom.git
+cd spotify-multiroom
+```
+
+2. Start the container:
+```bash
+docker-compose up -d
+```
+
+3. Access the Snapcast web interface at:
+```
+http://your-server-ip:1780
+```
+
+### Docker Configuration
+
+The `docker-compose.yml` file exposes the following ports:
+- **1704**: Snapcast server (TCP)
+- **1705**: Snapcast control (TCP)
+- **1780**: Snapcast HTTP/web interface
+- **5353**: Avahi mDNS (UDP)
+
+The container uses **host networking mode** for optimal audio performance and mDNS discovery.
+
+---
+
+## Native Debian Installation
+
+If you prefer to run the system directly on Debian (without Docker), follow these steps:
+
+### Step 1: Install Base Dependencies
+
+```bash
+sudo apt-get update
 sudo apt-get install -y \
     curl \
     gnupg \
@@ -10,8 +63,12 @@ sudo apt-get install -y \
     avahi-daemon \
     avahi-utils \
     libnss-mdns
-Step 2: Install Raspotify (Librespot)
-bash# Add the raspotify repository key
+```
+
+### Step 2: Install Raspotify (Librespot)
+
+```bash
+# Add the raspotify repository key
 curl -sSL https://dtcooper.github.io/raspotify/key.asc | sudo tee /usr/share/keyrings/raspotify-archive-keyrings.asc >/dev/null
 
 # Add the repository
@@ -20,13 +77,23 @@ echo 'deb [signed-by=/usr/share/keyrings/raspotify-archive-keyrings.asc] https:/
 # Update and install
 sudo apt-get update
 sudo apt-get install -y raspotify
-Step 3: Install Snapcast Server
-bashsudo apt-get install -y snapserver
-Step 4: Configure Snapserver
-bash# Create snapserver config directory (if it doesn't exist)
+```
+
+### Step 3: Install Snapcast Server
+
+```bash
+sudo apt-get install -y snapserver
+```
+
+### Step 4: Configure Snapserver
+
+Create the snapserver configuration file. You can use the minimal configuration below, or copy the more detailed `snapserver.conf` file from this repository:
+
+**Minimal configuration (matches Docker setup):**
+
+```bash
 sudo mkdir -p /etc/snapserver
 
-# Create the snapserver configuration
 sudo tee /etc/snapserver/snapserver.conf > /dev/null <<EOF
 [stream]
 source = pipe:///tmp/snapfifo?name=Spotify&sampleformat=44100:16:2&buffer=2000
@@ -34,8 +101,25 @@ source = pipe:///tmp/snapfifo?name=Spotify&sampleformat=44100:16:2&buffer=2000
 [http]
 doc_root = /usr/share/snapserver/snapweb
 EOF
-Step 5: Create Avahi Service File
-bash# Create the Avahi service file for snapcast
+```
+
+**Or use the detailed configuration from the repository:**
+
+```bash
+sudo cp snapserver.conf /etc/snapserver/snapserver.conf
+```
+
+Key configuration settings:
+- **source**: Named pipe at `/tmp/snapfifo` where librespot writes audio
+- **sampleformat**: 44100 Hz, 16-bit, stereo
+- **buffer**: 2000ms buffer for network sync
+- **port**: 1704 (default Snapcast port)
+
+### Step 5: Create Avahi Service File
+
+Enable mDNS discovery for Snapcast:
+
+```bash
 sudo tee /etc/avahi/services/snapserver.service > /dev/null <<EOF
 <?xml version="1.0" standalone='no'?>
 <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
@@ -47,16 +131,29 @@ sudo tee /etc/avahi/services/snapserver.service > /dev/null <<EOF
   </service>
 </service-group>
 EOF
-Step 6: Disable Raspotify Systemd Service
-Since we'll run librespot manually:
-bashsudo systemctl disable raspotify
+```
+
+### Step 6: Disable Raspotify Systemd Service
+
+We'll run librespot manually, so disable the default service:
+
+```bash
+sudo systemctl disable raspotify
 sudo systemctl stop raspotify
-Step 7: Create the Named Pipe
-bash# Create the FIFO pipe
+```
+
+### Step 7: Create the Named Pipe
+
+```bash
+# Create the FIFO pipe
 sudo mkfifo /tmp/snapfifo
 sudo chmod 666 /tmp/snapfifo
-Step 8: Create a Startup Script
-bashsudo tee /usr/local/bin/spotify-multiroom.sh > /dev/null <<'EOF'
+```
+
+### Step 8: Create a Startup Script
+
+```bash
+sudo tee /usr/local/bin/spotify-multiroom.sh > /dev/null <<'EOF'
 #!/bin/bash
 
 # Ensure the FIFO exists
@@ -76,9 +173,14 @@ snapserver -c /etc/snapserver/snapserver.conf
 EOF
 
 sudo chmod +x /usr/local/bin/spotify-multiroom.sh
-Step 9: Create a Systemd Service (Optional but Recommended)
-This makes it start automatically on boot:
-bashsudo tee /etc/systemd/system/spotify-multiroom.service > /dev/null <<EOF
+```
+
+### Step 9: Create a Systemd Service
+
+Make the service start automatically on boot:
+
+```bash
+sudo tee /etc/systemd/system/spotify-multiroom.service > /dev/null <<EOF
 [Unit]
 Description=Spotify Multiroom Audio System
 After=network.target avahi-daemon.service
@@ -98,8 +200,12 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable spotify-multiroom.service
 sudo systemctl start spotify-multiroom.service
-Step 10: Verify Everything is Running
-bash# Check if Avahi is running
+```
+
+### Step 10: Verify Everything is Running
+
+```bash
+# Check if Avahi is running
 sudo systemctl status avahi-daemon
 
 # Check if your service is running
@@ -107,10 +213,59 @@ sudo systemctl status spotify-multiroom
 
 # Check if snapserver is listening
 sudo netstat -tlnp | grep snapserver
+```
 
-Access the Web Interface
+### Access the Web Interface
+
 Once running, you can access the Snapcast web interface at:
 
+```
 http://your-debian-ip:1780
+```
 
+---
 
+## Configuration Files
+
+This repository includes the following configuration files:
+
+- **`Dockerfile`**: Container definition for Docker deployment
+- **`docker-compose.yml`**: Docker Compose configuration
+- **`snapserver.conf`**: Snapserver configuration template
+- **`snapserver.service`**: Avahi mDNS service definition
+
+## Troubleshooting
+
+### Service won't start
+```bash
+# Check the logs
+sudo journalctl -u spotify-multiroom -f
+```
+
+### No audio output
+- Verify the named pipe exists: `ls -la /tmp/snapfifo`
+- Check if librespot is writing to the pipe
+- Ensure snapserver is reading from the pipe
+
+### Can't find the Spotify device
+- Ensure Avahi is running: `sudo systemctl status avahi-daemon`
+- Check if the device appears in your Spotify app's device list
+- The device name is "Spotify Multiroom"
+
+### Web interface not accessible
+- Verify snapserver is listening on port 1780: `sudo netstat -tlnp | grep 1780`
+- Check firewall rules if accessing from another machine
+
+## Snapcast Clients
+
+To play audio on other devices, install Snapcast clients:
+
+```bash
+sudo apt-get install snapclient
+```
+
+Configure each client to connect to your server's IP address.
+
+## License
+
+This project is open source. See the repository for license details.
