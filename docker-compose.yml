@@ -1,0 +1,19 @@
+services:
+  librespot-snapcast:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: librespot-snapcast
+    network_mode: host # Use host networking for better audio performance and mDNS discovery
+    restart: unless-stopped
+    volumes:
+      - /var/run/dbus:/var/run/dbus # Share D-Bus with host for Avahi
+      - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket # Share Avahi socket with host
+    environment:
+      - TZ=UTC # Set your timezone
+    privileged: true # Required for some system-level operations
+    ports:
+      - "1704:1704" # Snapcast server port
+      - "1705:1705" # Snapcast control port
+      - "1780:1780" # Snapcast HTTP server port
+      - "5353:5353/udp" # Avahi mDNS port
