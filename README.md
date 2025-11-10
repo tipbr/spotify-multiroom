@@ -1,6 +1,6 @@
 # Spotify Multiroom Audio System
 
-This project sets up a multiroom audio system using Spotify Connect (via librespot) and Snapcast. You can run this either as a Docker container or natively on Debian-based systems.
+This project sets up a multiroom audio system using Spotify Connect (via librespot) and Snapcast.
 
 ## Overview
 
@@ -8,46 +8,6 @@ The system consists of:
 - **Librespot**: A Spotify Connect client that appears as a Spotify device
 - **Snapcast**: A multiroom audio server that streams audio to multiple clients
 - **Avahi**: mDNS service for automatic network discovery
-
-## Quick Start with Docker
-
-### Prerequisites
-- Docker and Docker Compose installed
-- Host networking support (for mDNS discovery)
-
-### Installation
-
-1. Clone this repository:
-```bash
-git clone https://github.com/tipbr/spotify-multiroom.git
-cd spotify-multiroom
-```
-
-2. Start the container:
-```bash
-docker-compose up -d
-```
-
-3. Access the Snapcast web interface at:
-```
-http://your-server-ip:1780
-```
-
-### Docker Configuration
-
-The `docker-compose.yml` file exposes the following ports:
-- **1704**: Snapcast server (TCP)
-- **1705**: Snapcast control (TCP)
-- **1780**: Snapcast HTTP/web interface
-- **5353**: Avahi mDNS (UDP)
-
-The container uses **host networking mode** for optimal audio performance and mDNS discovery.
-
----
-
-## Native Debian Installation
-
-If you prefer to run the system directly on Debian (without Docker), follow these steps:
 
 ### Step 1: Install Base Dependencies
 
@@ -224,15 +184,6 @@ http://your-debian-ip:1780
 ```
 
 ---
-
-## Configuration Files
-
-This repository includes the following configuration files:
-
-- **`Dockerfile`**: Container definition for Docker deployment
-- **`docker-compose.yml`**: Docker Compose configuration
-- **`snapserver.conf`**: Snapserver configuration template
-- **`snapserver.service`**: Avahi mDNS service definition
 
 ## Troubleshooting
 
