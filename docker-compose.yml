@@ -1,5 +1,5 @@
 services:
-  librespot-snapcast:
+  multiroom-server:
     build:
       context: .
       dockerfile: Dockerfile
