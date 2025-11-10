@@ -1,0 +1,10 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name>Snapcast Server</name>
+  <service>
+    <type>_snapcast._tcp</type>
+    <port>1704</port>
+    <txt-record>version=1.0</txt-record>
+  </service>
+</service-group>
