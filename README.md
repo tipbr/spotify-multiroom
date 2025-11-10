@@ -107,3 +107,10 @@ sudo systemctl status spotify-multiroom
 
 # Check if snapserver is listening
 sudo netstat -tlnp | grep snapserver
+
+Access the Web Interface
+Once running, you can access the Snapcast web interface at:
+
+http://your-debian-ip:1780
+
+
